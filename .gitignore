@@ -1,0 +1,27 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Local face databases, embeddings, and capture data must stay private.
+/data/
+*.npz
+*.npy
+*.npz.*.tmp
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+*.mp4
+*.avi
+*.mov
+*.bag
+*.db3
+*.mcap
+
+# Local environment and credentials.
+.env
+.env.*
+!.env.example
+.DS_Store

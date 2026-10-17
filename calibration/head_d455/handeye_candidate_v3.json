@@ -1,0 +1,167 @@
+{
+  "mode": "eye-to-hand",
+  "handeye_method": "park",
+  "camera": "d455",
+  "convention": "T_A_B maps homogeneous 3D points from frame B into frame A: p_A = T_A_B @ p_B.",
+  "tag_family": "tag36h11",
+  "tag_id": 0,
+  "tag_black_edge_m": 0.1,
+  "transforms": {
+    "T_tool_tag": {
+      "maps_points_from": "tag",
+      "maps_points_to": "AR5-5_08L-W4C1C5_controller_flange",
+      "matrix_4x4": [
+        [
+          -0.040125410884776655,
+          -0.02561044839992905,
+          0.9988663856262671,
+          0.006792712343231125
+        ],
+        [
+          -0.9981002863089918,
+          0.04780185971535378,
+          -0.03886901950991059,
+          0.0010388931468376327
+        ],
+        [
+          -0.04675221782157518,
+          -0.9985284608565285,
+          -0.02747986514260564,
+          0.22320024627566878
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "T_base_camera": {
+      "maps_points_from": "camera",
+      "maps_points_to": "AR5-5_08L-W4C1C5_base",
+      "matrix_4x4": [
+        [
+          0.01130720119441353,
+          -0.03029288288663058,
+          0.9994771075155079,
+          0.1261739913603275
+        ],
+        [
+          -0.03329791987350017,
+          0.9989752538421985,
+          0.03065437559326343,
+          -0.25783669061603365
+        ],
+        [
+          -0.9993815065995805,
+          -0.03362712383377125,
+          0.010286924196337699,
+          -0.1118572031412741
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  },
+  "quality": {
+    "observations": 54,
+    "inliers": 54,
+    "outliers": 0,
+    "translation_residual_mean_mm": 3.9611433236914175,
+    "translation_residual_max_mm": 9.494848750298845,
+    "rotation_residual_mean_deg": 0.5439286995712619,
+    "rotation_residual_max_deg": 1.4766008443606184,
+    "usable_observations": 55,
+    "final_inliers": 54,
+    "mean_tag_pnp_error_px": 0.08536981582457602,
+    "max_tag_pnp_error_px": 0.33065431771624626
+  },
+  "inlier_images": [
+    "images/000000.png",
+    "images/000001.png",
+    "images/000002.png",
+    "images/000003.png",
+    "images/000004.png",
+    "images/000005.png",
+    "images/000006.png",
+    "images/000007.png",
+    "images/000008.png",
+    "images/000009.png",
+    "images/000010.png",
+    "images/000012.png",
+    "images/000013.png",
+    "images/000014.png",
+    "images/000015.png",
+    "images/000016.png",
+    "images/000017.png",
+    "images/000018.png",
+    "images/000019.png",
+    "images/000020.png",
+    "images/000021.png",
+    "images/000022.png",
+    "images/000023.png",
+    "images/000024.png",
+    "images/000025.png",
+    "images/000026.png",
+    "images/000027.png",
+    "images/000028.png",
+    "images/000029.png",
+    "images/000030.png",
+    "images/000031.png",
+    "images/000032.png",
+    "images/000033.png",
+    "images/000034.png",
+    "images/000035.png",
+    "images/000036.png",
+    "images/000037.png",
+    "images/000038.png",
+    "images/000039.png",
+    "images/000040.png",
+    "images/000041.png",
+    "images/000042.png",
+    "images/000043.png",
+    "images/000044.png",
+    "images/000045.png",
+    "images/000046.png",
+    "images/000047.png",
+    "images/000048.png",
+    "images/000049.png",
+    "images/000050.png",
+    "images/000051.png",
+    "images/000052.png",
+    "images/000053.png",
+    "images/000054.png"
+  ],
+  "validation": {
+    "passed": false,
+    "mean_translation_limit_mm": 5.0,
+    "mean_rotation_limit_deg": 0.3,
+    "note": "仅为采集样本的一致性检查；投入抓取前仍需独立位置精度验证。"
+  },
+  "calibration_session": {
+    "schema_version": 2,
+    "camera": "d455",
+    "serial": "260722304986",
+    "width": 640,
+    "height": 480,
+    "fps": 15,
+    "arm": "left",
+    "base_frame": "AR5-5_08L-W4C1C5_base",
+    "tool_frame": "AR5-5_08L-W4C1C5_controller_flange",
+    "tag_family": "tag36h11",
+    "tag_id": 0,
+    "tag_black_edge_m": 0.1,
+    "pose_source": "rokae-controller-flange",
+    "controller_pose_topic": "/left/controller_flange_pose",
+    "joint_topic": "/left/joint_states",
+    "controller_pose_coordinate": "flangeInBase",
+    "head_must_remain_fixed": true,
+    "intrinsics_sha256": "dd3b5988b1f3e37acff17b0676f0ef0f49343deede778c7f6b6c4e419e8790ea"
+  },
+  "dataset": "/home/rpp/caliberate/data/handeye/head_d455"
+}

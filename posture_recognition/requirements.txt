@@ -1,0 +1,6 @@
+numpy
+Pillow
+PyYAML
+torch
+ultralytics
+lap>=0.5.12

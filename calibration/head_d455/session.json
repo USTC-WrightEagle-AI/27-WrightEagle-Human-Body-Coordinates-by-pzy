@@ -1,0 +1,20 @@
+{
+  "schema_version": 2,
+  "camera": "d455",
+  "serial": "260722304986",
+  "width": 640,
+  "height": 480,
+  "fps": 15,
+  "arm": "left",
+  "base_frame": "AR5-5_08L-W4C1C5_base",
+  "tool_frame": "AR5-5_08L-W4C1C5_controller_flange",
+  "tag_family": "tag36h11",
+  "tag_id": 0,
+  "tag_black_edge_m": 0.1,
+  "pose_source": "rokae-controller-flange",
+  "controller_pose_topic": "/left/controller_flange_pose",
+  "joint_topic": "/left/joint_states",
+  "controller_pose_coordinate": "flangeInBase",
+  "head_must_remain_fixed": true,
+  "intrinsics_sha256": "dd3b5988b1f3e37acff17b0676f0ef0f49343deede778c7f6b6c4e419e8790ea"
+}

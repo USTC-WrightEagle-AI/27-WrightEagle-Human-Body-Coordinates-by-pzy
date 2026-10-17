@@ -1,0 +1,84 @@
+# Head D455 + 3D skeleton + TCN static posture recognition.
+
+camera:
+  # 2026-10-15 calibration snapshot in ../calibration/head_d455.
+  serial_no: "260722304986"
+  namespace: "head/camera"
+  width: 640
+  height: 480
+  fps: 15
+  calibration_dir: "../../calibration/head_d455"
+  rgb_topic: "/head/camera/color/image_raw"
+  # This must remain aligned to the color image.
+  depth_topic: "/head/camera/aligned_depth_to_color/image_raw"
+  camera_info_topic: "/head/camera/color/camera_info"
+  camera_info_timeout: 15.0
+  parameter_service: "/head/camera/get_parameters"
+  frame_id: "head_camera_color_optical_frame"
+
+  # RealSense optical coordinates: +X right, +Y image-down, +Z forward.
+  # Measured from 5 s of stationary D455 IMU data on 2026-10-16, transformed
+  # into the color optical frame with the device's internal IMU extrinsics.
+  # This does not depend on the unaccepted arm hand-eye rotation candidate.
+  down_axis: [-0.004230, 0.997762, 0.066737]
+
+  # 深度图参数
+  depth:
+    min_valid: 0.3        # 最小有效深度（米），小于此值视为无效
+    max_valid: 10.0       # 最大有效深度（米），大于此值视为无效
+    hole_search_radius: 5 # 深度空洞邻域搜索半径（像素）
+
+model:
+  # Portable PyTorch model; the upstream Jetson TensorRT engine is incompatible.
+  weights_path: "../models/yolov8n-pose.pt"
+  input_size: 640
+  conf_threshold: 0.35
+  device: 0
+
+person_selection:
+  # Keep every ByteTrack person so each ID can receive a name and position.
+  nearest_only: false
+
+tracking:
+  algorithm: "bytetrack"
+  config: "bytetrack.yaml"
+
+face_recognition:
+  enabled: true
+  python: "/home/rpp/miniconda3/envs/robot-face/bin/python"
+  worker: "../src/face_identity_worker.py"
+  database: "../../data/faces.npz"
+  provider: "auto"
+  threshold: 0.45
+  det_size: 640
+  keypoint_confidence: 0.35
+  min_assignment_iou: 0.08
+  min_assignment_score: 0.25
+  every_n_frames: 5
+  confirmations: 2
+  history_size: 5
+  max_track_age: 45
+
+localization:
+  # Camera optical XYZ is the authoritative position output.
+  candidate_base_transform: "../../calibration/head_d455/handeye_candidate_v3.json"
+  publish_candidate_left_base: true
+
+classifier:
+  # 24帧 NTU RGB+D 120 3D TCN。每个跟踪目标维护独立历史缓存。
+  weights_path: "../models/pose_tcn_ntu_fukinect.pth"
+  device: "cuda"
+  confidence_threshold: 0.4
+  min_history: 6
+  max_track_age: 15
+  # 短时深度空洞沿用历史；连续失效超过此值后输出未知。
+  max_stale_features: 3
+  # 用当前帧三维几何校正 TCN 对明显深蹲的坐/躺误判。
+  # 阈值来自当前 D455 现场采样，五个条件必须同时满足。
+  deep_squat_guard:
+    enabled: true
+    knee_angle_max: 65.0
+    hip_angle_max: 60.0
+    height_ratio_max: 1.7
+    torso_angle_max: 55.0
+    valid_ratio_min: 0.85
