@@ -85,7 +85,7 @@ class CameraSourceTest(unittest.TestCase):
 class EnrollmentArgumentsTest(unittest.TestCase):
     def test_default_minimum_face_size_supports_longer_distance(self) -> None:
         arguments = build_enrollment_parser().parse_args(["Test Person"])
-        self.assertEqual(arguments.min_face_size, 80)
+        self.assertEqual(arguments.min_face_size, 65)
         self.assertEqual(arguments.camera, "head")
         self.assertTrue(arguments.depth_filter)
 

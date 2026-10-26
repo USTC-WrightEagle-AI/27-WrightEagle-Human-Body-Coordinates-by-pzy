@@ -86,13 +86,13 @@ def select_nearest_face(
         raise ValueError("Minimum depth gap must not be negative")
     if not measurements:
         return NearestFaceSelection(index=None, reason="no_faces")
-    if any(measurement.distance_m is None for measurement in measurements):
-        return NearestFaceSelection(index=None, reason="invalid_depth")
-
     ordered = sorted(
         (float(measurement.distance_m), index)
         for index, measurement in enumerate(measurements)
+        if measurement.distance_m is not None
     )
+    if not ordered:
+        return NearestFaceSelection(index=None, reason="invalid_depth")
     if len(ordered) > 1 and ordered[1][0] - ordered[0][0] < min_depth_gap_m:
         return NearestFaceSelection(index=None, reason="ambiguous_depth")
     return NearestFaceSelection(index=ordered[0][1], reason=None)

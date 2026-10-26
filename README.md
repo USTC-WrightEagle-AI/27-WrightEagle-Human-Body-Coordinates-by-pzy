@@ -19,7 +19,7 @@
 推荐单独建立 Python 3.10 环境，避免影响机器人已有的 GraspNet 环境。先加载 Conda 的 shell 配置：
 
 ```bash
-cd /home/rpp/pzy-cs
+cd /home/rpp/Robocup/pzy-cs
 source /home/rpp/miniconda3/etc/profile.d/conda.sh
 conda create -n robot-face --override-channels -c conda-forge python=3.10 pip -y
 conda activate robot-face
@@ -48,19 +48,31 @@ python -c "import onnxruntime as ort; print(ort.get_available_providers())"
 
 ## 记住一个人
 
-默认使用头部 D455（SDK 序列号 `260722304986`），按 2026-10-15 标定配置读取 `640×480@15` 彩色和对齐深度图。画面中出现多人时，只录入深度中位数最小的最近人脸：
+默认使用头部 D455（SDK 序列号 `260722304986`），按高清配置读取 `1280×720@30` 彩色和对齐深度图。画面中出现多人时，只录入深度中位数最小的最近人脸：
 
 ```bash
 python remember_person.py 张三
 ```
 
-脚本默认收集 20 个合格样本。人员已经存在时，需要明确覆盖：
+录入默认要求人脸检测框的宽和高都至少为 **65 像素**（短边 ≥ 65，不按总面积判断），无需再传入 `--min-face-size 65`。脚本默认收集 20 个合格样本。人员已经存在时，需要明确覆盖：
 
 ```bash
 python remember_person.py 张三 --replace
 ```
 
 特征默认保存在 `data/faces.npz`，其中不包含原始照片。
+
+没有有效深度的人脸会被忽略，画面标注 `Ignored: no valid depth`，不阻止其他人脸录入。程序仅从有效深度的人脸中选择最近者；全部无有效深度时暂停采集。最近两个有效人脸的深度差默认必须达到 0.15 米，否则本帧暂停采集。可按现场情况修改：
+
+```bash
+python remember_person.py 张三 --min-depth-gap 0.20 --replace
+```
+
+要临时关闭深度过滤并恢复“画面只能有一人”的模式：
+
+```bash
+python remember_person.py 张三 --no-depth-filter --replace
+```
 
 ## 删除已录入人员
 
@@ -83,18 +95,6 @@ python manage_faces.py delete "张三" --yes
 ```
 
 该操作只删除指定人员的特征，不会删除其他人员。
-
-最近两个人的深度差默认必须达到 0.15 米，否则本帧暂停采集。可按现场情况修改：
-
-```bash
-python remember_person.py 张三 --min-depth-gap 0.20 --replace
-```
-
-要临时关闭深度过滤并恢复“画面只能有一人”的模式：
-
-```bash
-python remember_person.py 张三 --no-depth-filter --replace
-```
 
 ## 识别人脸
 
@@ -122,20 +122,29 @@ python recognize_person.py --headless --json
 
 ## 头部相机及标定配置
 
-录入和识别均默认 `--camera head`，默认订阅现有 `/head/camera` ROS 图像流，并向相机节点核对 SDK 序列号，不依赖易变的 `/dev/videoX` 编号。默认配置在 `calibration/head_d455/`，从 `/home/rpp/caliberate/data/handeye/head_d455/` 保存了 2026-10-15 的独立快照：
+录入和识别均默认 `--camera head`，默认订阅现有 `/head/camera` ROS 图像流，并向相机节点核对 SDK 序列号，不依赖易变的 `/dev/videoX` 编号。默认配置在 `calibration/head_d455_hd/`，内参由序列号匹配的实机导出，对应 `1280×720@30`，没有对旧内参做比例缩放。原始 `calibration/head_d455/` 保留了 2026-10-15 的低分辨率标定及手眼候选外参：
 
-- `session.json`：设备序列号和 `640×480@15` 流配置。
+- `session.json`：设备序列号和 `1280×720@30` 流配置。
 - `intrinsics.json`：工厂 RGB 内参、畸变参数、深度参数和设备 RGB/Depth 外参。
-- `handeye_candidate_v3.json`：头部相机到左臂基座的候选外参，保留来源记录。
+- 原目录中的 `handeye_candidate_v3.json`：头部相机到左臂基座的候选外参，保留来源记录，不作为高清流的新标定。
 
-启动时检查内参摘要、ROS 相机序列号、流配置及实时 RGB 内参。焦距允许 0.5% 的小幅变化（与姿态节点一致，兼容机器人实测约 0.300% 的焦距变化），主点和畸变系数须与保存值一致；不会把旧焦距强制写入设备。不允许在头部模式中随意修改分辨率或帧率；更改后应导出对应流的新内参及 session，再使用 `--calibration-dir`。ROS 相机驱动或 SDK 使用设备工厂参数完成深度对齐，识别模型仍接收原始 BGR 彩色图，不做额外的图像坐标或机械臂坐标变换。
+启动时检查内参摘要、ROS 相机序列号、流配置及实时 RGB 内参。焦距允许 0.5% 的小幅变化（兼容设备温度补偿），主点和畸变系数须与保存值一致；不会把旧焦距强制写入设备。不允许在头部模式中随意修改分辨率或帧率；更改后应导出对应流的新内参及 session，再使用 `--calibration-dir`。ROS 相机驱动或 SDK 使用设备工厂参数完成深度对齐，识别模型仍接收原始 BGR 彩色图，不做额外的图像坐标或机械臂坐标变换。
 
 v3 平均残差约为 `3.96 mm / 0.544°`，旋转残差尚未通过标定检查。人脸身份匹配只需要图像和特征，不依赖该机械臂外参；此项目不输出左臂基座系人脸坐标，也不会控制机械臂。
+
+仅启动头部相机（已运行 `/head/camera` 时不要重复启动）：
+
+```bash
+source /home/rpp/rpp_ws/install/setup.bash
+ros2 launch /home/rpp/Robocup/pzy-cs/launch/head_camera.launch.py
+```
+
+机器人整体 bringup 的头部配置也已更新为 `1280×720@30`；左右腕部相机配置保持原值。
 
 使用现有环境直接启动，无需重新安装：
 
 ```bash
-cd /home/rpp/pzy-cs
+cd /home/rpp/Robocup/pzy-cs
 /home/rpp/miniconda3/envs/robot-face/bin/python recognize_person.py
 ```
 
@@ -165,9 +174,39 @@ python remember_person.py 张三 --camera /dev/video16 --realsense-serial 260322
 
 已有 `data/faces.npz` 保持不变，可以直接用于头部相机匹配；如现场效果不佳，可用头部相机手动重新录入，覆盖时须加 `--replace`。
 
+录入和识别的检测器输入默认 `--det-size 1280`，保留高清画面的远处小脸细节。相比 640 输入，检测计算量会增加；算力不足时可显式改用 `--det-size 640`，但远距离检测能力也可能下降。录入最小脸框短边默认为 65 像素，匹配阈值仍为 0.45，已有身份库可继续使用。实际有效距离需要在现场光照和人脸角度下验证。
+
+需要重新导出工厂内参时，在相机未被其他程序占用时运行（输出目录必须不存在）：
+
+```bash
+/home/rpp/miniconda3/envs/robot-face/bin/python scripts/export_head_profile.py --output calibration/head_d455_hd_new
+```
+
+## 当前默认参数
+
+以下参数对应独立人脸录入 `remember_person.py` 和识别 `recognize_person.py`；联合姿态识别的参数以 `posture_recognition/config/pose_3d_config.yaml` 为准。
+
+| 参数 | 默认值 | 作用范围及含义 |
+|---|---|---|
+| `--min-face-size` | **65 像素** | 录入：原图人脸框短边下限，宽和高均须达到 65 |
+| `--min-depth` / `--max-depth` | 0.15 / 4.0 米 | 录入：有效深度范围，不保证整个范围内均可准确识别 |
+| `--min-depth-gap` | 0.15 米 | 录入：最近两个有效人脸的最小距离差 |
+| `--samples` | 20 | 录入：合格特征样本数 |
+| `--sample-every` | 3 帧 | 录入：每 3 帧尝试采集一次合格样本 |
+| `--timeout` | 90 秒 | 录入：采集超时 |
+| `--threshold` | 0.45 | 识别：余弦相似度下限 |
+| `--history` / `--confirm-frames` | 5 / 3 帧 | 识别：保留 5 帧历史，至少 3 帧支持同一身份才确认 |
+| `--det-size` | 1280 | 录入和识别：检测器输入尺寸，独立于人脸框短边阈值 |
+
+在现有环境中直接使用默认值（不依赖当前是否激活 Conda）：
+
+```bash
+/home/rpp/miniconda3/envs/robot-face/bin/python remember_person.py "姓名"
+```
+
 ## 参数建议
 
-- 人脸距离：默认要求检测框短边至少达到 80 像素；还要拉远时可传入 `--min-face-size 70`，不建议低于 64 像素。
+- 人脸距离：默认要求检测框短边至少达到 65 像素；可通过 `--min-face-size` 调整，例如 `--min-face-size 80` 提高录入质量门槛。
 - 录入：正脸为主，缓慢向左右转头，避免强逆光。
 - 阈值：必须用实际人员和摄像头数据校准，不要只依赖默认值。
 - 数据：`data/faces.npz` 属于生物特征数据，应限制读取权限并避免上传到代码仓库。

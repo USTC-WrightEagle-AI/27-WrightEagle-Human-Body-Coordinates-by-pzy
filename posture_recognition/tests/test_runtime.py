@@ -196,7 +196,7 @@ class PackageConfigTest(unittest.TestCase):
         with open(config_path, "r", encoding="utf-8") as stream:
             camera = yaml.safe_load(stream)["camera"]
         self.assertEqual("260722304986", camera["serial_no"])
-        self.assertEqual((640, 480, 15), (
+        self.assertEqual((1280, 720, 30), (
             camera["width"], camera["height"], camera["fps"]))
         self.assertEqual(
             "/head/camera/color/image_raw", camera["rgb_topic"])

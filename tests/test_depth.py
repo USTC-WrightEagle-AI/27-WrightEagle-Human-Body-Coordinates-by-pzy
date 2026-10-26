@@ -54,18 +54,45 @@ class FaceDepthTest(unittest.TestCase):
         self.assertEqual(selection.index, 1)
         self.assertIsNone(selection.reason)
 
-    def test_rejects_ambiguous_or_invalid_depth(self) -> None:
+    def test_rejects_ambiguous_or_all_invalid_depth(self) -> None:
         ambiguous = select_nearest_face(
             [FaceDepth((0, 0, 10, 10), 0.70), FaceDepth((20, 0, 30, 10), 0.78)],
             min_depth_gap_m=0.15,
         )
         invalid = select_nearest_face(
-            [FaceDepth((0, 0, 10, 10), 0.7), FaceDepth((20, 0, 30, 10), None)]
+            [FaceDepth((0, 0, 10, 10), None), FaceDepth((20, 0, 30, 10), None)]
         )
         self.assertEqual(ambiguous.reason, "ambiguous_depth")
         self.assertEqual(invalid.reason, "invalid_depth")
         self.assertIsNone(ambiguous.index)
         self.assertIsNone(invalid.index)
+
+    def test_ignores_invalid_depth_and_preserves_original_index(self) -> None:
+        selection = select_nearest_face([
+            FaceDepth((0, 0, 10, 10), None),
+            FaceDepth((20, 0, 30, 10), 1.4),
+            FaceDepth((40, 0, 50, 10), 0.7),
+            FaceDepth((60, 0, 70, 10), None),
+        ])
+        self.assertEqual(selection.index, 2)
+        self.assertIsNone(selection.reason)
+
+    def test_single_valid_face_can_be_selected(self) -> None:
+        selection = select_nearest_face([
+            FaceDepth((0, 0, 10, 10), None),
+            FaceDepth((20, 0, 30, 10), 0.7),
+        ])
+        self.assertEqual(selection.index, 1)
+        self.assertIsNone(selection.reason)
+
+    def test_invalid_face_does_not_disable_ambiguity_check(self) -> None:
+        selection = select_nearest_face([
+            FaceDepth((0, 0, 10, 10), None),
+            FaceDepth((20, 0, 30, 10), 0.7),
+            FaceDepth((40, 0, 50, 10), 0.78),
+        ])
+        self.assertEqual(selection.reason, 'ambiguous_depth')
+        self.assertIsNone(selection.index)
 
 
 if __name__ == "__main__":

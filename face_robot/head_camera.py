@@ -11,7 +11,7 @@ from .camera import Camera, parse_camera_source
 from .depth import RealSenseCamera
 
 HEAD_SERIAL = '260722304986'
-DEFAULT_CALIBRATION = Path(__file__).resolve().parents[1] / 'calibration/head_d455'
+DEFAULT_CALIBRATION = Path(__file__).resolve().parents[1] / 'calibration/head_d455_hd'
 
 
 def add_camera_arguments(parser):
@@ -47,7 +47,7 @@ def load_head_configuration(directory):
 def validate_camera_parameters(width, height, values, coefficients, expected):
     k = np.asarray(expected['camera_matrix'])
     size = expected['image_size_px']
-    # Match the posture node's 0.5% tolerance for small live focal drift.
+    # RealSense thermal compensation can slightly update fx/fy at runtime.
     if (width != size['width'] or height != size['height']
             or not np.allclose(values[:2],[k[0,0],k[1,1]],rtol=.005,atol=1e-5)
             or not np.allclose(values[2:],[k[0,2],k[1,2]],rtol=0,atol=1e-4)

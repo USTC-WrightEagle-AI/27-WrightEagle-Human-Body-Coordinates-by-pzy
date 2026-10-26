@@ -30,7 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--history", type=int, default=5, metavar="FRAMES")
     parser.add_argument("--confirm-frames", type=int, default=3)
     parser.add_argument("--max-faces", type=int, default=5)
-    parser.add_argument("--det-size", type=int, default=640)
+    parser.add_argument("--det-size", type=int, default=1280,
+                        help="Face detector input size (default: 1280; use 640 for lower compute cost)")
     parser.add_argument("--provider", choices=("auto", "cuda", "cpu"), default="auto")
     parser.add_argument("--model-root", type=Path)
     parser.add_argument("--headless", action="store_true")

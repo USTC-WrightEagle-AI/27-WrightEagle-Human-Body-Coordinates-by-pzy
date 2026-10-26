@@ -1,0 +1,10 @@
+{
+  "schema_version": 2,
+  "camera": "d455",
+  "serial": "260722304986",
+  "width": 1280,
+  "height": 720,
+  "fps": 30,
+  "purpose": "Face recognition RGB-D profile; factory intrinsics, no hand-eye calibration",
+  "intrinsics_sha256": "4b0784c0789b4dcb7075c0334cacf072841e3fedbe480aa378a5f72e94005c4a"
+}

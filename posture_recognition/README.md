@@ -25,33 +25,17 @@ ByteTrack ID。姓名仍需要在同一 ID 上多帧确认；深度位置、姓�
 
 - 相机：头部 Intel RealSense D455
 - 序列号：`260722304986`
-- 流配置：`640x480@15`
+- 流配置：`1280x720@30`
 - RGB：`/head/camera/color/image_raw`
 - 对齐深度：`/head/camera/aligned_depth_to_color/image_raw`
 - 内参：`/head/camera/color/camera_info`
-- 标定快照：`../calibration/head_d455/`
+- 标定快照：`../calibration/head_d455_hd/`
+
+联合识别的人脸检测器输入为 `1280`，与独立录入和识别一致；人体姿态模型输入仍为 `640`。
 
 节点启动时会核对相机参数服务中的序列号和 RGB/Depth profile，并将实时
-`CameraInfo` 与 2026-10-15 保存的内参比较。任何设备、分辨率、帧率或内参
+`CameraInfo` 与高清流对应的工厂内参比较。任何设备、分辨率、帧率或内参
 不匹配都会拒绝启动。
-
-若启动报“运行中的头部相机内参与标定快照不一致”，错误会逐项显示
-分辨率、`fx/fy/cx/cy` 或 `D` 的实时值和标定值，以及超差参数的差值。
-姿态节点的焦距容差为 0.5%，主点为 0.0001 px，畸变系数为 1e-7。
-机器人实测 `fx=387.34613037109375`、`fy=386.80743408203125`，
-相对快照均增加约 0.300%，而主点和畸变系数一致；旧的 0.1% 门限会
-拒绝这组数据。0.5% 是本项目的兼容门限，并非设备精度保证。
-三维反投影始终使用实时 `CameraInfo` 中的焦距，不使用快照焦距代替。
-畸变系数长度不同也会给出明确错误。可在机器人上读取实时消息定位原因：
-
-```bash
-source /opt/ros/humble/setup.bash
-/usr/bin/python3 /opt/ros/humble/bin/ros2 topic echo \
-  /head/camera/color/camera_info --once
-```
-
-先确认差异来自驱动、流配置还是标定快照，再决定是否重新导出标定。
-不要仅为通过检查修改快照或删除校验。
 
 `camera.down_axis` 是 2026-10-16 在机器人静止时连续采集 5 秒 D455 IMU
 数据，再通过设备内部 IMU 到彩色光学系外参转换得到：
@@ -65,7 +49,7 @@ source /opt/ros/humble/setup.bash
 先启动机器人 bringup，确认头部 RGB 和对齐深度话题存在，然后运行：
 
 ```bash
-cd /home/rpp/pzy-cs
+cd /home/rpp/Robocup/pzy-cs
 ./posture_recognition/scripts/start_3d.sh
 ```
 
@@ -126,7 +110,7 @@ ros2 topic echo /person_identity_locations
 才会把姓名绑定到 ByteTrack ID；否则输出 `Unknown`。录入或更新人员仍使用：
 
 ```bash
-cd /home/rpp/pzy-cs
+cd /home/rpp/Robocup/pzy-cs
 /home/rpp/miniconda3/envs/robot-face/bin/python remember_person.py 张三 --replace
 ```
 
@@ -149,16 +133,16 @@ source /opt/ros/humble/setup.bash
 校验模型：
 
 ```bash
-cd /home/rpp/pzy-cs/posture_recognition/models
+cd /home/rpp/Robocup/pzy-cs/posture_recognition/models
 sha256sum -c SHA256SUMS
 ```
 
 ## 测试
 
 ```bash
-cd /home/rpp/pzy-cs
+cd /home/rpp/Robocup/pzy-cs
 source /opt/ros/humble/setup.bash
-export PYTHONPATH=/home/rpp/pzy-cs/posture_recognition/src:$PYTHONPATH
+export PYTHONPATH=/home/rpp/Robocup/pzy-cs/posture_recognition/src:$PYTHONPATH
 /home/rpp/miniconda3/envs/foundationpose/bin/python \
   -m unittest discover -s posture_recognition/tests -v
 ```

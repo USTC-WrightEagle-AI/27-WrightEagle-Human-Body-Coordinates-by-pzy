@@ -37,7 +37,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Minimum face-box side length accepted for enrollment (default: 65)",
     )
     parser.add_argument("--timeout", type=float, default=90.0, metavar="SECONDS")
-    parser.add_argument("--det-size", type=int, default=640)
+    parser.add_argument("--det-size", type=int, default=1280,
+                        help="Face detector input size (default: 1280; use 640 for lower compute cost)")
     parser.add_argument(
         "--depth-filter",
         action=argparse.BooleanOptionalAction,
@@ -133,20 +134,16 @@ def enroll(args: argparse.Namespace) -> None:
                         measurements, min_depth_gap_m=args.min_depth_gap
                     )
                     if selection.reason == "invalid_depth":
-                        status = "Waiting for valid depth on every face"
+                        status = "No face with valid depth - waiting"
                         for face, measurement in zip(faces, measurements):
                             label = (
                                 f"Depth {measurement.distance_m:.2f}m"
                                 if measurement.distance_m is not None
-                                else "No depth"
+                                else "Ignored: no valid depth"
                             )
                             draw_face(frame, face.bbox, label, (0, 165, 255))
                         face = None
                     else:
-                        nearest_index = min(
-                            range(len(measurements)),
-                            key=lambda index: float(measurements[index].distance_m),
-                        )
                         if selection.reason == "ambiguous_depth":
                             status = "Nearest faces are too close in depth"
                             face = None
@@ -159,7 +156,10 @@ def enroll(args: argparse.Namespace) -> None:
                         for index, (candidate, measurement) in enumerate(
                             zip(faces, measurements)
                         ):
-                            if index == nearest_index and selection.index is not None:
+                            if measurement.distance_m is None:
+                                label = "Ignored: no valid depth"
+                                box_color = (100, 100, 100)
+                            elif index == selection.index:
                                 label = f"Nearest {measurement.distance_m:.2f}m"
                                 box_color = (0, 200, 0)
                             else:

@@ -1,13 +1,13 @@
 # Head D455 + 3D skeleton + TCN static posture recognition.
 
 camera:
-  # 2026-10-15 calibration snapshot in ../calibration/head_d455.
+  # Factory intrinsics exported for the current 1280x720@30 head profile.
   serial_no: "260722304986"
   namespace: "head/camera"
-  width: 640
-  height: 480
-  fps: 15
-  calibration_dir: "../../calibration/head_d455"
+  width: 1280
+  height: 720
+  fps: 30
+  calibration_dir: "../../calibration/head_d455_hd"
   rgb_topic: "/head/camera/color/image_raw"
   # This must remain aligned to the color image.
   depth_topic: "/head/camera/aligned_depth_to_color/image_raw"
@@ -50,7 +50,7 @@ face_recognition:
   database: "../../data/faces.npz"
   provider: "auto"
   threshold: 0.45
-  det_size: 640
+  det_size: 1280
   keypoint_confidence: 0.35
   min_assignment_iou: 0.08
   min_assignment_score: 0.25

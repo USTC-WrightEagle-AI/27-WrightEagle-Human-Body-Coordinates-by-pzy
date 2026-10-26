@@ -21,7 +21,6 @@ import message_filters
 from ultralytics import YOLO
 from PIL import Image as PILImage, ImageDraw, ImageFont
 
-from camera_intrinsics import validate_snapshot_intrinsics
 from depth_backproject import (
     DepthBackProjector,
     person_distance_3d,
@@ -282,12 +281,24 @@ class PoseClassifier3DNode(Node):
         if len(profiles) != 2 or any(
                 profile != expected_profile for profile in profiles):
             raise ValueError(
-                f"运行中的头部相机流配置不匹配: {profiles}")
+                f"运行中的头部相机流配置不匹配: 期望 {expected_profile}, 实际 {profiles}")
 
     def _validate_live_intrinsics(self, msg, cfg_cam, config_path):
         _, intrinsics, _ = self._calibration_files(cfg_cam, config_path)
-        validate_snapshot_intrinsics(
-            msg, intrinsics, int(cfg_cam["width"]), int(cfg_cam["height"]))
+        matrix = np.asarray(intrinsics["camera_matrix"], dtype=float)
+        values = np.asarray([msg.k[0], msg.k[4], msg.k[2], msg.k[5]])
+        expected = np.asarray(
+            [matrix[0, 0], matrix[1, 1], matrix[0, 2], matrix[1, 2]])
+        focal_ok = np.allclose(values[:2], expected[:2], rtol=0.005, atol=1e-5)
+        principal_ok = np.allclose(
+            values[2:], expected[2:], rtol=0.0, atol=1e-4)
+        distortion_ok = np.allclose(
+            msg.d, intrinsics["distortion_coefficients"],
+            rtol=0.0, atol=1e-7)
+        if (msg.width != int(cfg_cam["width"]) or
+                msg.height != int(cfg_cam["height"]) or
+                not focal_ok or not principal_ok or not distortion_ok):
+            raise ValueError("运行中的头部相机内参与配置的标定快照不一致")
 
     def _log_throttled(self, level, key, period, message):
         now = time.monotonic()

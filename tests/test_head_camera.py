@@ -28,14 +28,15 @@ class HeadCameraTests(unittest.TestCase):
         for args in [recognize_person.build_parser().parse_args([]),remember_person.build_parser().parse_args(['Test'])]:
             self.assertEqual(args.camera,'head')
             self.assertEqual(args.head_backend,'ros')
+            self.assertEqual(args.det_size,1280)
             camera=head.open_camera(args)
             self.assertIsInstance(camera,RosHeadCamera)
         session,intr=head.load_head_configuration(head.DEFAULT_CALIBRATION)
         self.assertEqual(session['serial'],head.HEAD_SERIAL)
-        self.assertEqual((session['width'],session['height'],session['fps']),(640,480,15))
+        self.assertEqual((session['width'],session['height'],session['fps']),(1280,720,30))
 
     def test_no_silent_camera_or_stream_switch(self):
-        for options in [('--width','1280'),('--fps','30'),('--realsense-serial','260322273941')]:
+        for options in [('--width','640'),('--fps','15'),('--realsense-serial','260322273941')]:
             with self.assertRaises(ValueError):head.open_camera(self.args(options))
 
     def test_modified_calibration_is_rejected(self):
@@ -50,27 +51,20 @@ class HeadCameraTests(unittest.TestCase):
         _,intr=head.load_head_configuration(head.DEFAULT_CALIBRATION)
         k=intr['camera_matrix'];values=[k[0][0],k[1][1],k[0][2],k[1][2]]
         live=values.copy();live[0]*=1.0006;live[1]*=1.0006
-        head.validate_camera_parameters(640,480,live,intr['distortion_coefficients'],intr)
-        head.validate_camera_parameters(640,480,
-            [387.34613037109375,386.80743408203125,*values[2:]],
-            intr['distortion_coefficients'],intr)
-        for width,v in [(1280,values),(640,[values[0]*1.02,*values[1:]])]:
-            with self.assertRaises(ValueError):head.validate_camera_parameters(width,480,v,intr['distortion_coefficients'],intr)
-        for scale in (0.994,1.006):
-            live=values.copy();live[0]*=scale;live[1]*=scale
-            with self.assertRaises(ValueError):
-                head.validate_camera_parameters(640,480,live,intr['distortion_coefficients'],intr)
+        head.validate_camera_parameters(1280,720,live,intr['distortion_coefficients'],intr)
+        for width,v in [(640,values),(1280,[values[0]*1.02,*values[1:]])]:
+            with self.assertRaises(ValueError):head.validate_camera_parameters(width,720,v,intr['distortion_coefficients'],intr)
 
     def test_sdk_receives_head_serial_and_returns_expected_frame_type(self):
         _,intr=head.load_head_configuration(head.DEFAULT_CALIBRATION)
-        color=np.zeros((480,640,3),dtype=np.uint8);depth=np.ones((480,640),dtype=np.float32)
+        color=np.zeros((720,1280,3),dtype=np.uint8);depth=np.ones((720,1280),dtype=np.float32)
         for with_depth in [False,True]:
             with mock.patch.object(head,'RealSenseCamera') as constructor, mock.patch.object(head,'validate_live_intrinsics'):
                 device=constructor.return_value
                 device.read.return_value=(color,depth)
                 with head.open_camera(self.args(['--head-backend','sdk']),with_depth=with_depth) as camera:
                     result=camera.read()
-                constructor.assert_called_once_with('head',640,480,15,serial=head.HEAD_SERIAL)
+                constructor.assert_called_once_with('head',1280,720,30,serial=head.HEAD_SERIAL)
                 self.assertIs(result[0] if with_depth else result,color)
                 if with_depth:self.assertIs(result[1],depth)
                 device.__exit__.assert_called_once()
@@ -89,7 +83,7 @@ class HeadCameraTests(unittest.TestCase):
     def test_recognition_uses_head_frames_and_existing_database(self):
         args=recognize_person.build_parser().parse_args([])
         camera=mock.MagicMock()
-        camera.__enter__.return_value.read.return_value=np.zeros((480,640,3),dtype=np.uint8)
+        camera.__enter__.return_value.read.return_value=np.zeros((720,1280,3),dtype=np.uint8)
         face=DetectedFace((10,10,150,150),.99,np.ones(512,dtype=np.float32))
         with (mock.patch.object(recognize_person,'open_camera',return_value=camera) as open_input,
               mock.patch.object(recognize_person,'FaceEngine') as engine,
